@@ -1,79 +1,64 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import buttons from './buttonInfo';
 import Button from "./Button";
 function App() {
-let [buttonState, setButtonState] = React.useState([]);
-let [operationState, setOperationState] = React.useState();
-let [valueState, setValueState] = React.useState([]);
-let [evalState, setEvalState] = React.useState(false);
+let [buttonState, setButtonState] = React.useState({
+  currentValue: "",
+  secondValue: "",
+  currentSymbol: null
+});
+let [resultState, setResultState] = React.useState("");
+let [equalState, setEqualState] = React.useState(false);
   function onAdd(button) {
-    setButtonState((prevContent) => [...prevContent, button]);
-    setEvalState(true);
-  }
-
-  function add() {
-    let newVal = valueState[0] + valueState[1]; 
-    setValueState([]);
-    
-    return newVal;
-  }
-  function subtract() {
-    let newVal = valueState[0] - valueState[1]; 
-    setValueState([]);
-    return newVal;
-  }
-  function multiply() {
-    let newVal = valueState[0] * valueState[1]; 
-    setValueState([]);
-    
-    return newVal;
-  }
-  function divide() {
-    let newVal = valueState[0] / valueState[1];
-    setValueState([]);
-    return newVal;
-  }
-
-  function display() {
-    let displayValue = "";
-    let lastElement = buttonState[buttonState.length - 1];
-    let values = buttonState.filter((value) => value !== lastElement);
-    if (typeof lastElement === "string") {
-      if (lastElement === "=") {
-        console.log(operationState);
-        switch (operationState) {
-          case "+":
-            return add();
-          case "-":
-            return subtract();     
-          case "*":
-            return  multiply();  
-          case "/":
-            return divide();
-          default:
-            break;
-        }
-      } else {
-        setOperationState(lastElement);
-        setValueState((prevValues) => [...prevValues, values]);
-        setButtonState([]);
-        console.log(operationState);
-        console.log(valueState);
-        console.log(buttonState);
+    if (typeof button === "string") {
+      evaluate(); 
+      if (button === "=") {
+        setEqualState((prevState) => !prevState);
+        setResultState((prevState) => String(prevState));
       }
-      
-      
+      else{
+      setButtonState((prevContent) => ({currentSymbol:button, secondValue:prevContent.currentValue, currentValue:""}));
+      }
+
     } else {
-      buttonState.forEach((val) => displayValue+=val);
-      return displayValue;
+        setButtonState((prevContent) => {
+          let finalVal = equalState ? button :("" + prevContent.currentValue + button);
+          if (equalState) {
+            setEqualState((prevState) => !prevState);
+          }
+          return {...prevContent, currentValue:finalVal}
+          });
     }
-    setEvalState(false);
   }
 
+  function evaluate() {
+    if (buttonState.secondValue !== "" && buttonState.currentValue!=="") {
+      console.log(buttonState.currentSymbol);
+      switch (buttonState.currentSymbol) {
+        case "+":
+          setResultState(Number(buttonState.secondValue) + Number(buttonState.currentValue));
+          break;
+        case "-":
+          setResultState(Number(buttonState.secondValue) - Number(buttonState.currentValue));
+          break;
+        case "*":
+          setResultState(Number(buttonState.secondValue) * Number(buttonState.currentValue));
+          break;
+        case "/":
+          setResultState(Number(buttonState.secondValue) / Number(buttonState.currentValue));
+          break;
+        default:
+          break;
+      }
+    } 
+  }
+  useEffect(() => setButtonState(() =>  ({currentValue: resultState, secondValue: "", currentSymbol:null})), [resultState]);
+  useEffect(() => console.log(buttonState), [buttonState]);
+  useEffect(() => console.log(equalState), [equalState]);
   return (
     <>
-    <input name="eval" value={evalState ? display() : ""} readOnly={true} />
-    {buttons.map((button, index) => (<Button key={index} content={button} onClick={onAdd}/>))}
+    <input name="eval" value={buttonState.currentValue} readOnly={true} />
+    {buttons.map((button) => (<Button key={button} content={button} onClick={onAdd}/>))}
     </>
     );
 
